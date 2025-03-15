@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/styles.css";
+import { predictDestinationCountry } from "../utils/predictCountryService";
 
 function CountryPredictPage() {
   const [formData, setFormData] = useState({
@@ -13,19 +14,33 @@ function CountryPredictPage() {
     no_of_people: ""
   });
 
-  const [predictedCountry, setPredictedCountry] = useState(""); // store predicted country
+  const [predictedCountry, setPredictedCountry] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePredict = () => {
+  const handlePredict = async () => {
+    setLoading(true);
+    setError("");
+    setPredictedCountry("");
 
+    const result = await predictDestinationCountry(formData);
+
+    if (result.success) {
+      setPredictedCountry(result.predictedCountry);
+    } else {
+      setError(result.error);
+    }
+
+    setLoading(false);
   };
 
   return (
     <div className="container">
-      <h2 className="title">Destination Country Prediction</h2>
+      <h2 className="title">User Information Form</h2>
       <form className="form-container">
         <div className="form-group">
           <label>Gender:</label>
@@ -62,15 +77,21 @@ function CountryPredictPage() {
           <input type="text" name="no_of_people" value={formData.no_of_people} onChange={handleChange} className="input" />
         </div>
 
-        <button type="button" className="button predict" onClick={handlePredict}>
-          Predict Destination Country
+        <button type="button" className="button predict" onClick={handlePredict} disabled={loading}>
+          {loading ? "Predicting..." : "Predict Destination Country"}
         </button>
 
-        <div className="prediction-result">
-          <label>Predicted Country:</label>
-          <span className="predicted-value">{predictedCountry}</span>
-        </div>
+        {error && <p className="error-message">{error}</p>}
+
+        {predictedCountry && (
+          <div className="prediction-result">
+            <label>Predicted Country:</label>
+            <span className="predicted-value">{predictedCountry}</span>
+          </div>
+        )}
+
       </form>
+
       <Link to="/" className="back-link">Back to Home</Link>
     </div>
   );
